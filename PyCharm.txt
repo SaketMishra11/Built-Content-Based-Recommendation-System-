@@ -1,0 +1,44 @@
+import streamlit as st
+import pickle
+import pandas as pd
+import requests
+
+def recommend(selected_movie_name):
+    # Find index of the selected movie
+    movie_index = movie[movie['title'] == selected_movie_name].index[0]
+
+    # Get similarity distances
+    distances = similarity[movie_index]
+
+    # Sort movies by similarity and remove the selected movie itself
+    movie_list = sorted(list(enumerate(distances)), reverse=True, key=lambda x: x[1])
+    movie_list = [m for m in movie_list if m[0] != movie_index][:5]  # Top 5 recommendations
+
+    recommended_movies = []
+
+    for i in movie_list:
+        movie_id = movie.iloc[i[0]].movie_id  # you can use this to fetch poster if needed
+        recommended_movies.append(movie.iloc[i[0]].title)
+
+    return recommended_movies
+
+# Load movies DataFrame
+movie_dict = pickle.load(open('movie_dict.pkl', 'rb'))
+movie = pd.DataFrame(movie_dict)
+
+# Load similarity matrix
+similarity = pickle.load(open('similarity', 'rb'))
+
+# Streamlit UI
+st.title('Movie Recommender System')
+
+selected_movie_name = st.selectbox(
+    'Select a movie:',
+    movie['title'].values
+)
+
+if st.button('GO'):
+    recommendation = recommend(selected_movie_name)
+    st.subheader('Recommended Movies:')
+    for i in recommendation:
+        st.write(i)
